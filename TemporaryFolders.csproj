@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<AssemblyVersion>0.1</AssemblyVersion>
+
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<ApplicationIcon>TempFolder.ico</ApplicationIcon>
+		<AssemblyName>TempFolder</AssemblyName>
+		<Authors>Alex Vallat</Authors>
+		<Product>Temporary Folders</Product>
+		<PackageProjectUrl>https://github.com/AlexVallat/TemporaryFolders</PackageProjectUrl>
+		<Copyright>$(PackageProjectUrl)</Copyright>
+		<InformationalVersion>$(AssemblyVersion)</InformationalVersion>
+		<NeutralLanguage>en</NeutralLanguage>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(PublishProtocol)'!=''">
+		<DebugType>none</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="Installer\DependencyInstaller\**" />
+		<Compile Remove="Installer\Output\**" />
+		<EmbeddedResource Remove="Installer\DependencyInstaller\**" />
+		<EmbeddedResource Remove="Installer\Output\**" />
+		<None Remove="Installer\DependencyInstaller\**" />
+		<None Remove="Installer\Output\**" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove=".gitignore" />
+		<None Remove=".gitmodules" />
+		<None Remove="TempFolder.gfie" />
+	</ItemGroup>
+	<ItemGroup>
+		<COMReference Include="SHDocVw">
+			<WrapperTool>tlbimp</WrapperTool>
+			<VersionMinor>1</VersionMinor>
+			<VersionMajor>1</VersionMajor>
+			<Guid>eab22ac0-30c1-11cf-a7eb-0000c05bae0b</Guid>
+			<Lcid>0</Lcid>
+			<Isolated>false</Isolated>
+			<EmbedInteropTypes>true</EmbedInteropTypes>
+		</COMReference>
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="TempFolder.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="Properties\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Resources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+	<Target Name="PostPublish" AfterTargets="Publish">
+		<Exec Command="iscc &quot;$(ProjectDir)Installer\TemporaryFolders.iss&quot; /DAppVersion=$(InformationalVersion)" />
+	</Target>
+
+</Project>
