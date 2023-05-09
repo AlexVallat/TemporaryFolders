@@ -11,6 +11,13 @@ the explorer window, you will be prompted to keep or delete the files within it.
 
 ![Temporary Folders Screenshot](Screenshots/DeletePrompt.png)
 
+## Installation
+An installer is provided on the [Release](https://github.com/AlexVallat/TemporaryFolders/releases) page, called TemporaryFolders-Setup.exe.
+This can create icons in your Start Menu and optionally Desktop and Send To menus too.
+
+Temporary Folders is also hosted on [MajorGeeks.com](https://www.majorgeeks.com/files/details/temporary_folders.html) where you can rate and
+comment on it.
+
 ## Examples
 ### Downloading a file an attatching it to an email
 Double click the "New Temporary Folder" shortcut, then download the file in the browser
