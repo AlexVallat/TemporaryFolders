@@ -16,7 +16,14 @@ internal static class Program
         var tempFile = Path.GetTempFileName();
         File.Delete(tempFile);
         var tempFolder = Directory.CreateDirectory(Path.Combine(tempFile, Resources.TemporaryFolderName)).FullName;
-        Clipboard.SetText(tempFolder);
+        try
+        {
+            Clipboard.SetText(tempFolder);
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            // Couldn't set the clipboard, ignore that
+        }
 
         foreach (var arg in args)
         {
@@ -67,31 +74,34 @@ internal static class Program
             Process.Start("explorer.exe", $"/separate /root,\"{tempFolder}\"");
             Directory.SetCurrentDirectory(tempFolder);
 
-            // Also update a symlink to the folder
-            var symLinkPath = Path.Combine(Path.GetTempPath(), "Most Recent Temporary Folder");
+            // Also update a junction to the folder
+            var junctionPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Most Recent Temporary Folder");
 
             try
             {
-                if (File.GetAttributes(symLinkPath).HasFlag(FileAttributes.Directory | FileAttributes.ReparsePoint))
+                var overwriteJunction = false;
+
+                if (!Directory.Exists(junctionPath)) 
+                { 
+                    overwriteJunction = true;
+                }
+                else if (File.GetAttributes(junctionPath).HasFlag(FileAttributes.Directory | FileAttributes.ReparsePoint))
                 {
-                    var symlink = new DirectoryInfo(symLinkPath);
+                    var symlink = new DirectoryInfo(junctionPath);
                     if (symlink.LinkTarget != null) // Only delete the existing symlink if it *is* a symlink
                     {
-                        symlink.Delete();
+                        overwriteJunction = true;
                     }
+                }
+
+                if (overwriteJunction)
+                {
+                    Junction.Create(junctionPath, tempFolder, true);
                 }
             }
             catch (IOException)
             {
-                // Ignore it if we can't delete the symlink
-            }
-            try
-            {
-                Directory.CreateSymbolicLink(symLinkPath, tempFolder);
-            }
-            catch (IOException)
-            { 
-                // Ignore it if we can't update the symlink
+                // Ignore it if we can't overwrite the junction
             }
         }
 
@@ -128,7 +138,7 @@ internal static class Program
             {
                 AllowCancel = true,
                 Caption = Resources.DeleteConfirmationTitle,
-                Icon = new TaskDialogIcon(NativeMethods.GetStockIcon(32)),
+                Icon = new TaskDialogIcon(NativeMethods.GetStockIcon(Windows.Win32.UI.Shell.SHSTOCKICONID.SIID_RECYCLERFULL)),
                 Text = Resources.DeleteConfirmationPrompt,
                 SizeToContent = true,
                 Buttons = new TaskDialogButtonCollection

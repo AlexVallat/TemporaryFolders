@@ -1,0 +1,7 @@
+SHGetStockIconInfo
+CreateFile
+GENERIC_ACCESS_RIGHTS
+DeviceIoControl
+FSCTL_SET_REPARSE_POINT
+// REPARSE_DATA_BUFFER // Not available until https://github.com/microsoft/CsWin32/issues/387 fixed
+IO_REPARSE_TAG_MOUNT_POINT
