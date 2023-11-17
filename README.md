@@ -56,3 +56,12 @@ instead of being sent to the Recycle Bin.
 
 The installer does not assign a hotkey to the start menu shortcut, but I have often found it convenient to do so, for even faster access to
 creating a new folder. This can easily be done through the standard windows properties page for the shortcut.
+
+The installer can, if the "Map T: drive to most recent temporary folder" option is selected, create a mapping for a virtual T:\ drive which always
+points to the most recently created temporary folder. This makes it easy to navigate to that folder from Open or Save dialogs, for example. When
+the explorer window is closed and the folder deleted, accessing T: will show the message "T:\ is unavailable"
+
+This option is only available in the installer if there is not already a T: drive, and if installing for all users (as administrator).
+
+Even if T: drive mapping is not used, the path "%ProgramData%\Most Recent Temporary Folder" is still created, it may be convenient to use Explorer to pin
+this to the Quick Access list. Whenever a new temporary folder is created, this junction is updated to point to the newest one.

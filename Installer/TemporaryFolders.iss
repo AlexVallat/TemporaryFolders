@@ -2,18 +2,22 @@
 #define AppPublisher "Alex Vallat"
 #define AppURL "https://github.com/AlexVallat/TemporaryFolders"
 #define AppExeName "TempFolder.exe"
-
-#ifndef AppVersion
-#define AppVersion "9.9.9.9"
+#define AppVersion GetVersionNumbersString("..\bin\Publish\" + AppExeName)
+#if AppVersion == ""
+#error GetVersionNumbersString("..\bin\Publish\" + AppExeName + ")") failed
 #endif
 
-#define public Dependency_NoExampleSetup
-#define UseNetCoreCheck
+#define public Dependency_Path_NetCoreCheck "DependencyInstaller\dependencies\"
 #include "DependencyInstaller\CodeDependencies.iss"
 
 [CustomMessages]
 ShortcutName=New Temporary Folder
 CreateSendToIcon=Create a &Send To shortcut
+SusbtDrive=&Map T: drive to most recent temporary folder (restart required)
+DriveName=Temporary Folder
+
+[Messages]
+UninstalledAndNeedsRestart=Uninstall completed. To remove the mapped T: drive, your computer must be restarted.%n%nWould you like to restart now?
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -45,10 +49,32 @@ VersionInfoCopyright={#AppURL}
 [Code]
 function InitializeSetup: Boolean;
 begin
-  Dependency_AddDotNet60Desktop;
+  Dependency_AddDotNet80Desktop;
 
   Result := True;
 end;
+
+function AllowSubstDrive: Boolean;
+begin
+  Result := IsAdmin and not DirExists('T:\');
+end;
+
+var
+  uninstallRebootRequired: Boolean;
+
+function InitializeUninstall: Boolean;
+begin
+  uninstallRebootRequired := RegValueExists(HKLM, 'System\CurrentControlSet\Control\Session Manager\DOS Devices', 'T:')
+  Result := True;
+end;
+
+function UninstallNeedRestart(): Boolean;
+begin
+  Result := uninstallRebootRequired and not RegValueExists(HKLM, 'System\CurrentControlSet\Control\Session Manager\DOS Devices', 'T:');
+end;
+
+[UninstallRun]
+Filename: "taskkill"; Parameters: "/im ""{#AppExeName}"" /f"; Flags: runhidden; RunOnceId: "KillAppProcess"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -56,14 +82,22 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "sendtoicon"; Description: "{cm:CreateSendToIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "susbtdrive"; Description: "{cm:SusbtDrive}"; Flags: unchecked restart; Check: AllowSubstDrive
 
 [Files]
-Source: "DependencyInstaller\src\netcorecheck.exe"; Flags: dontcopy noencryption
-Source: "DependencyInstaller\src\netcorecheck_x64.exe"; Flags: dontcopy noencryption
-
-
 Source: "..\bin\Publish\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+
+[Registry]
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\T"; Flags: uninsdeletekey; Tasks: susbtdrive
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\T\DefaultIcon"; ValueType: string; ValueData: "{app}\{#AppExeName},0"; Tasks: susbtdrive
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\T\DefaultLabel"; ValueType: string; ValueData: "{cm:DriveName}"; Tasks: susbtdrive
+
+Root: HKLM; Subkey: "System\CurrentControlSet\Control\Session Manager\DOS Devices"; ValueName: "T:"; ValueType: string; ValueData: "\??\{commonappdata}\Most Recent Temporary Folder"; Flags: uninsdeletevalue; Tasks: susbtdrive
+
+[UninstallDelete]
+Type: dirifempty; Name: "{commonappdata}\Most Recent Temporary Folder"
 
 [Icons]
 Name: "{autoprograms}\{cm:ShortcutName}"; Filename: "{app}\{#AppExeName}"
