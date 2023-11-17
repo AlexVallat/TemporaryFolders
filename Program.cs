@@ -66,6 +66,33 @@ internal static class Program
 
             Process.Start("explorer.exe", $"/separate /root,\"{tempFolder}\"");
             Directory.SetCurrentDirectory(tempFolder);
+
+            // Also update a symlink to the folder
+            var symLinkPath = Path.Combine(Path.GetTempPath(), "Most Recent Temporary Folder");
+
+            try
+            {
+                if (File.GetAttributes(symLinkPath).HasFlag(FileAttributes.Directory | FileAttributes.ReparsePoint))
+                {
+                    var symlink = new DirectoryInfo(symLinkPath);
+                    if (symlink.LinkTarget != null) // Only delete the existing symlink if it *is* a symlink
+                    {
+                        symlink.Delete();
+                    }
+                }
+            }
+            catch (IOException)
+            {
+                // Ignore it if we can't delete the symlink
+            }
+            try
+            {
+                Directory.CreateSymbolicLink(symLinkPath, tempFolder);
+            }
+            catch (IOException)
+            { 
+                // Ignore it if we can't update the symlink
+            }
         }
 
         ShowFolder();
